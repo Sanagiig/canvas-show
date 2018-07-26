@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        html {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            height: 100%;
+            background: #fff;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+    class circle{
+        constructor(ctx,x,y){
+            this.x = x;
+            this.y = y;
+            this.r = Math.random() * 10 + 5;
+            this.directX = Math.random();
+            this.directY = Math.random();
+            this.ctx = ctx || null;
+        }
+
+        move(w,h){
+            this.directX = this.x >= w || this.x <= 0 ? (-this.directX) : this.directX;
+            this.directY = this.y >= h || this.y <= 0 ? (-this.directY) : this.directY;
+            this.x += this.directX;
+            this.y += this.directY;
+        }
+
+        drawCircle(){
+            var ctx = this.ctx;
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,this.r,0,2 * Math.PI);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(204, 204, 204, 0.3)';
+            ctx.fill();
+        }
+
+        drawLine(shap){
+            var ctx = this.ctx,
+                sx = this.x,
+                sy = this.y,
+                dx = shap.x,
+                dy = shap.y,
+                gx = dx - sx,
+                gy = dy - sy;
+
+
+            if(parseInt(Math.sqrt(gx * gx + gy * gy)) < 200){
+                ctx.beginPath();
+                ctx.moveTo(sx,sy);
+                ctx.lineTo(dx,dy);
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(204, 204, 204, 0.3)';
+                ctx.stroke();
+            }
+        }
+    }
+
+    class curCircle extends circle{
+        constructor(x,y){
+            super(x,y)
+        }
+
+        drawCircle(){
+            var ctx = this.ctx;
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,1,0,2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 20, 54, 0.2)';
+            ctx.fill();
+        }
+
+        move(x,y){
+            console.log('pre')
+            if(x !== undefined && y !== undefined){
+                console.log('set')
+                this.x = x;
+                this.y = y;
+            }
+        }
+    }
+
+    function init(){
+        var count = 50,
+            ctx = this.ctx;
+
+        circleList[0] = new curCircle(ctx,0,0);
+        for(var i=0;i<count;i++){
+            circleList.push(new circle(ctx,w * Math.random() , h * Math.random()));
+        }
+        draw();
+    }
+
+    function draw(){
+        var w = canvas.width,
+            h = canvas.height,
+            len = circleList.length,
+            curCircle = circleList[0];
+
+        ctx.clearRect(0,0,w,h);
+
+        for(var i = 1;i<len;i++){
+            circleList[i].move(w,h);
+            circleList[i].drawCircle();
+            curCircle.drawLine(circleList[i]);
+            curCircle.drawCircle();
+            for(var j=i;j<len;j++){
+                circleList[i].drawLine(circleList[j]);
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+
+
+    window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+    var canvas = document.getElementById('canvas'),
+      circleList = [],
+      ctx = canvas.getContext('2d'),
+      w = canvas.width = canvas.offsetWidth,
+      h = canvas.height = canvas.offsetHeight;
+
+
+
+    window.addEventListener('load',function(){
+    init();
+    })
+
+    window.addEventListener('mousemove',function(e){
+        circleList[0].move(e.clientX,e.clientY);
+    })
+
+
+
+
+</script>
+</body>
+</html>
