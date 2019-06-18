@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        html,body{
+            padding:0;
+            margin:0;
+            height:100%;
+            width:100%;
+            background: rgb(18, 18, 41);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas" class=""></canvas>
+</body>
+<script>
+    // canvas背景动画
+;(function(){
+    var canvas = document.getElementById('bgCanvas');
+    var ctx = canvas.getContext('2d');
+    var requestAnimationFrame = 
+        window.requestAnimationFrame       ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame    ||
+        function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+        };
+
+    var width;
+    var height;
+    // 暂停
+    var pause = false;
+    // 下落的最小X 坐标
+    var dropStartX = 200;
+    var starRadius = 3;
+    var starTailLength = 40;
+    var starColor = 'rgba(255,255,255,0.8)';
+    var maxStarCount = 6;
+    var lastTime = 0;
+    var speed = 90;
+    // 当前帧率
+    var fps = 0;
+    var starPointList = [];
+    
+
+    var getSize = function(){
+        var parent = canvas.parentNode;
+        width = parent.clientWidth;
+        height = parent.clientHeight;
+        canvas.width = width;
+        canvas.height = height;
+    }
+
+    // 生成流星初始坐标
+    var genStarPoint = function(count){
+        for(var i=0;i<count;i++){
+            starPointList.push({
+                x:dropStartX + (width * Math.random()),
+                y:Math.random() * - 400,
+                speed: speed * Math.random() + 20
+            })
+        }
+    }
+
+    // 判断流星是否越界, 并进行相应删除操作
+    var clearOverStar = function(){
+        for(var i=maxStarCount - 1;i>=0;i--){
+            var p = starPointList[i];
+            if(p.x + starTailLength < 0 || p.y - starTailLength > height){
+                starPointList.splice(i,1);
+                genStarPoint(1);
+            }
+        }
+    }
+
+    // 构建流星
+    var buildStar = function(p){
+        // 尾巴的节数，随机长度实现动态效果
+        var tailSplitCount = 6 + 15 * Math.random();
+        // 每一节尾巴的长度
+        var lenUnit = starTailLength / tailSplitCount;
+        // 主体
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = starColor;
+        ctx.arc(p.x,p.y,starRadius,0,2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+        // 尾巴
+        ctx.save();
+        ctx.beginPath();
+        ctx.lineCap = 'round';
+        // 画多条线段，并将其相连，每一节线段都比上一节少一圈，看起来像流星尾巴的效果
+        for(var i=0;i<tailSplitCount;i++){
+            ctx.moveTo(p.x + lenUnit * i -1,p.y - lenUnit * i + 1);
+            ctx.lineTo(p.x + lenUnit * (i+1) , p.y - lenUnit * (i+1) );
+            ctx.strokeStyle = 'rgba(230,230,230,' + 0.8/ (i+1) + ')';
+            ctx.lineWidth = starRadius * 2 - i * 0.3;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // fadeOut
+    var fadeOut = function(){
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(0,0,width,height);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // 流星移动
+    var moving = function(){
+        if(lastTime){
+            fps = 1000 / (Date.now() - lastTime);
+        }
+        lastTime = Date.now();
+        if(!pause){
+            requestAnimationFrame(function(){
+                ctx.clearRect(0,0,width,height);
+                for(var i=0;i<maxStarCount;i++){
+                    var p = starPointList[i];
+                    p.x = p.x - p.speed / fps;
+                    p.y = p.y + p.speed / fps;
+                    buildStar(p);
+                }
+                clearOverStar();
+                moving();
+            })
+        }
+    }
+
+    // 初始化
+    var init = function(){
+        getSize();
+        genStarPoint(maxStarCount);
+        moving();
+    }
+
+    window.addEventListener('load',init);
+    window.addEventListener('resize',getSize);
+})()
+</script>
+</html>
